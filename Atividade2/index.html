@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List Simplificada - Fatec</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Minha Agenda</h1>
+            <p>Lista de tarefas simples</p>
+        </header>
+
+        <main class="single-column">
+            <section class="form-section">
+                <form id="todo-form">
+                    <input type="text" id="task-name" placeholder="Título da tarefa" required>
+                    <input type="date" id="task-date" required>
+                    <button type="submit" id="add-btn">Adicionar Tarefa</button>
+                </form>
+            </section>
+
+            <section class="list-section">
+                <div class="controls">
+                    <button id="sort-date">Ordenar por Data</button>
+                </div>
+
+                <ul id="task-list">
+                    </ul>
+                <p id="empty-msg" class="hidden">Nenhuma tarefa pendente.</p>
+            </section>
+        </main>
+    </div>
+    <script src="scripts/script.js"></script>
+</body>
+</html>
