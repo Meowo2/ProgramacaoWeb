@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.js
+*.d.ts
+!vite.config.ts
+!tsconfig.json
+coverage/
+.DS_Store
+*.log
