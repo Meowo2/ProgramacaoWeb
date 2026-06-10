@@ -1,36 +1,38 @@
-import express from 'express';
-import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
-import authRoutes from './routes/authRoutes';
-import continenteRoutes from './routes/continenteRoutes';
-import paisRoutes from './routes/paisRoutes';
-import cidadeRoutes from './routes/cidadeRoutes';
-import { errorHandler } from './middleware/errorHandler';
+import app from './app';
+import sequelize from './config/database';
+import './models'; // carrega todos os models e associações
 
-export const prisma = new PrismaClient();
+const PORT = Number(process.env.PORT) || 3000;
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+async function startServer(): Promise<void> {
+  try {
+    // Testa conexão com o banco
+    await sequelize.authenticate();
+    console.log('✅ Conexão com o PostgreSQL estabelecida.');
 
-app.use(cors());
-app.use(express.json());
+    // Sincroniza modelos (não recria tabelas existentes)
+    await sequelize.sync({ alter: false });
+    console.log('✅ Modelos sincronizados com o banco.');
 
-// Rotas
-app.use('/api/auth', authRoutes);
-app.use('/api/continentes', continenteRoutes);
-app.use('/api/paises', paisRoutes);
-app.use('/api/cidades', cidadeRoutes);
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+      console.log(`📋 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log('\n📌 Rotas disponíveis:');
+      console.log(`   POST   /auth/register`);
+      console.log(`   POST   /auth/login`);
+      console.log(`   GET    /auth/me`);
+      console.log(`   GET    /continentes`);
+      console.log(`   GET    /paises`);
+      console.log(`   GET    /cidades`);
+      console.log(`   GET    /api-externas/pais/:nome`);
+      console.log(`   GET    /api-externas/clima/cidade/:id`);
+      console.log(`   GET    /api-externas/pais-enriquecido/:id`);
+      console.log(`   GET    /health`);
+    });
+  } catch (error) {
+    console.error('❌ Falha ao iniciar o servidor:', error);
+    process.exit(1);
+  }
+}
 
-// Health check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', message: 'Mundo API is running' });
-});
-
-// Error handler
-app.use(errorHandler);
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
-export default app;
+startServer();
