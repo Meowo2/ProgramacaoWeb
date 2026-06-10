@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
 
 import authRoutes from './routes/authRoutes';
 import continentRoutes from './routes/continentRoutes';
@@ -22,6 +24,27 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ── Swagger UI ────────────────────────────────────────────────────────────────
+app.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'GEO CRUD — API Docs',
+    swaggerOptions: {
+      persistAuthorization: true, // mantém o token entre recarregamentos
+      defaultModelsExpandDepth: 1,
+      defaultModelExpandDepth: 2,
+      docExpansion: 'list',
+    },
+  })
+);
+
+// JSON puro do spec (útil para importar no Insomnia / Postman)
+app.get('/docs.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {

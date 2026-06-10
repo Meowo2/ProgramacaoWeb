@@ -1,8 +1,7 @@
 export default function Loading() {
   return (
-    <div className="loading">
-      <div className="spinner" />
-      Carregando...
+    <div className="flex justify-center items-center p-8">
+      <span>Carregando...</span>
     </div>
   );
 }

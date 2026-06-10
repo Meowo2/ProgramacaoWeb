@@ -17,6 +17,8 @@ async function startServer(): Promise<void> {
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
       console.log(`📋 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📚 Swagger UI:      http://localhost:${PORT}/docs`);
+      console.log(`📄 Swagger JSON:    http://localhost:${PORT}/docs.json`);
       console.log('\n📌 Rotas disponíveis:');
       console.log(`   POST   /auth/register`);
       console.log(`   POST   /auth/login`);

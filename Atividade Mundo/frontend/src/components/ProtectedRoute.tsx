@@ -1,26 +1,17 @@
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Navigate } from "react-router-dom";
 
-interface ProtectedRouteProps {
-  children: ReactNode;
+interface Props {
+  children: JSX.Element;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { usuario, loading } = useAuth();
+export default function ProtectedRoute({
+  children,
+}: Props) {
+  const token = localStorage.getItem("token");
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <div className="spinner" />
-        Carregando...
-      </div>
-    );
+  if (!token) {
+    return <Navigate to="/" replace />;
   }
 
-  if (!usuario) {
-    return <Navigate to="/login" />;
-  }
-
-  return <>{children}</>;
+  return children;
 }

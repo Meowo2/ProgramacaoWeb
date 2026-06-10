@@ -8,3 +8,5 @@ dist/
 coverage/
 .DS_Store
 *.log
+backend_old
+frontend_old
