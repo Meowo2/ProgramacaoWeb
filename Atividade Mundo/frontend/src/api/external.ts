@@ -54,3 +54,37 @@ export const buscarPaisEnriquecido = async (
 
   return response.data;
 };
+
+export const validarCidadeNoPais = async (
+  cidade: string,
+  id_pais: number
+) => {
+  const response = await api.get(
+    "/api-externas/validar-cidade",
+    {
+      params: {
+        cidade,
+        id_pais,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const sugerirCidades = async (
+  cidade: string,
+  id_pais: number
+) => {
+  const response = await api.get(
+    "/api-externas/sugerir-cidades",
+    {
+      params: {
+        cidade,
+        id_pais,
+      },
+    }
+  );
+
+  return response.data;
+};

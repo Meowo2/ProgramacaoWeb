@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const REST_COUNTRIES_BASE = 'https://restcountries.com/v3.1';
 const OPENWEATHER_BASE = 'https://api.openweathermap.org/data/2.5';
+const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
 
 // ──────────────────────────────────────────────
 // REST Countries API (sem chave - gratuita)
@@ -9,6 +10,7 @@ const OPENWEATHER_BASE = 'https://api.openweathermap.org/data/2.5';
 
 export interface CountryInfo {
   name: { common: string; official: string };
+  cca2: string;
   capital?: string[];
   region: string;
   subregion?: string;
@@ -23,6 +25,25 @@ export interface CountryInfo {
   latlng: [number, number];
 }
 
+export interface CityGeoInfo {
+  name: string;
+  countryCode: string;
+  countryName?: string;
+  latitude: number;
+  longitude: number;
+  population?: number;
+}
+
+export interface CitySuggestion {
+  name: string;
+  displayName: string;
+  countryCode: string;
+  countryName?: string;
+  latitude: number;
+  longitude: number;
+  population?: number;
+}
+
 export const getCountryInfo = async (countryName: string): Promise<CountryInfo | null> => {
   try {
     const response = await axios.get<CountryInfo[]>(
@@ -32,6 +53,97 @@ export const getCountryInfo = async (countryName: string): Promise<CountryInfo |
     return response.data[0] || null;
   } catch {
     return null;
+  }
+};
+
+export const getCityInfo = async (
+  cityName: string,
+  countryCode: string
+): Promise<CityGeoInfo | null> => {
+  try {
+    const response = await axios.get<Array<Record<string, unknown>>>(
+      `${NOMINATIM_BASE}/search`,
+      {
+        params: {
+          q: `${cityName}, ${countryCode}`,
+          format: 'jsonv2',
+          addressdetails: 1,
+          limit: 1,
+          extratags: 1,
+        },
+        headers: {
+          'User-Agent': 'geo-crud-api/1.0',
+        },
+        timeout: 8000,
+      }
+    );
+
+    const result = response.data[0];
+
+    if (!result) {
+      return null;
+    }
+
+    const address = (result.address as Record<string, unknown> | undefined) || {};
+    const extratags = (result.extratags as Record<string, unknown> | undefined) || {};
+    const populationRaw = extratags.population;
+    const population = populationRaw ? Number(populationRaw) : undefined;
+
+    return {
+      name: String(result.name || result.display_name || cityName),
+      countryCode: String(address.country_code || countryCode).toUpperCase(),
+      countryName: typeof address.country === 'string' ? address.country : undefined,
+      latitude: Number(result.lat),
+      longitude: Number(result.lon),
+      population: Number.isFinite(population) ? population : undefined,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const getCitySuggestions = async (
+  cityName: string,
+  countryCode: string
+): Promise<CitySuggestion[]> => {
+  try {
+    const response = await axios.get<Array<Record<string, unknown>>>(
+      `${NOMINATIM_BASE}/search`,
+      {
+        params: {
+          q: `${cityName}, ${countryCode}`,
+          format: 'jsonv2',
+          addressdetails: 1,
+          limit: 8,
+          extratags: 1,
+        },
+        headers: {
+          'User-Agent': 'geo-crud-api/1.0',
+        },
+        timeout: 8000,
+      }
+    );
+
+    return response.data
+      .map((result) => {
+        const address = (result.address as Record<string, unknown> | undefined) || {};
+        const extratags = (result.extratags as Record<string, unknown> | undefined) || {};
+        const populationRaw = extratags.population;
+        const population = populationRaw ? Number(populationRaw) : undefined;
+
+        return {
+          name: String(result.name || cityName),
+          displayName: String(result.display_name || result.name || cityName),
+          countryCode: String(address.country_code || countryCode).toUpperCase(),
+          countryName: typeof address.country === 'string' ? address.country : undefined,
+          latitude: Number(result.lat),
+          longitude: Number(result.lon),
+          population: Number.isFinite(population) ? population : undefined,
+        };
+      })
+      .filter((item, index, array) => item.name && array.findIndex((candidate) => candidate.name === item.name) === index);
+  } catch {
+    return [];
   }
 };
 
@@ -124,6 +236,56 @@ export const getWeatherByCity = async (city: string, country?: string): Promise<
   } catch {
     return null;
   }
+};
+
+export const validateCityInCountry = async (
+  city: string,
+  countryName: string
+): Promise<{
+  valid: boolean;
+  city?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  population?: number;
+  weather?: WeatherData | null;
+} | null> => {
+  const countryInfo = await getCountryInfo(countryName);
+
+  if (!countryInfo?.cca2) {
+    return null;
+  }
+
+  const cityInfo = await getCityInfo(city, countryInfo.cca2);
+
+  if (!cityInfo) {
+    return { valid: false, city, country: countryInfo.name.common };
+  }
+
+  const weather = await getWeatherByCoords(cityInfo.latitude, cityInfo.longitude);
+
+  if (!weather) {
+    return {
+      valid: false,
+      city: cityInfo.name,
+      country: countryInfo.name.common,
+      latitude: cityInfo.latitude,
+      longitude: cityInfo.longitude,
+      population: cityInfo.population,
+    };
+  }
+
+  const valid = weather.country?.toUpperCase() === countryInfo.cca2.toUpperCase();
+
+  return {
+    valid,
+    city: cityInfo.name,
+    country: countryInfo.name.common,
+    latitude: cityInfo.latitude,
+    longitude: cityInfo.longitude,
+    population: cityInfo.population,
+    weather,
+  };
 };
 
 export const getWeatherByCoords = async (lat: number, lon: number): Promise<WeatherData | null> => {

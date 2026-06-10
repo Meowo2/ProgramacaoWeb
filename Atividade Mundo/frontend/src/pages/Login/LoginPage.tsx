@@ -13,7 +13,7 @@ export default function LoginPage() {
   const onSubmit = async (data: any) => {
     try {
       await loginUser(data);
-      navigate("/dashboard");
+      navigate("/geography");
     } catch {
       alert("Credenciais inválidas");
     }

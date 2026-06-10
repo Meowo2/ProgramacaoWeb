@@ -957,6 +957,135 @@ const options: swaggerJSDoc.Options = {
         },
       },
 
+      '/api-externas/validar-cidade': {
+        get: {
+          tags: ['APIs Externas'],
+          summary: 'Validar cidade em um país',
+          description:
+            'Valida se uma cidade pertence ao país cadastrado informado usando o ID do país no banco e REST Countries/OpenWeatherMap.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'cidade',
+              in: 'query',
+              required: true,
+              description: 'Nome da cidade',
+              schema: { type: 'string', example: 'Mexico City' },
+            },
+            {
+              name: 'id_pais',
+              in: 'query',
+              required: true,
+              description: 'ID do país cadastrado no banco',
+              schema: { type: 'integer', example: 1 },
+            },
+          ],
+          responses: {
+            200: {
+              description: 'Cidade validada com sucesso.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      message: { type: 'string' },
+                      data: {
+                        type: 'object',
+                        properties: {
+                          valid: { type: 'boolean' },
+                          city: { type: 'string' },
+                          country: { type: 'string' },
+                          population: { type: 'integer' },
+                          latitude: { type: 'number' },
+                          longitude: { type: 'number' },
+                          weather: { $ref: '#/components/schemas/WeatherData' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            400: {
+              description: 'Parâmetros obrigatórios ausentes.',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/Error' },
+                },
+              },
+            },
+            404: { $ref: '#/components/responses/NotFound' },
+            401: { $ref: '#/components/responses/Unauthorized' },
+          },
+        },
+      },
+
+      '/api-externas/sugerir-cidades': {
+        get: {
+          tags: ['APIs Externas'],
+          summary: 'Sugerir cidades parecidas',
+          description:
+            'Retorna uma lista de cidades parecidas com o texto digitado para o país cadastrado informado pelo ID.',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'cidade',
+              in: 'query',
+              required: true,
+              description: 'Texto parcial da cidade',
+              schema: { type: 'string', example: 'Mex' },
+            },
+            {
+              name: 'id_pais',
+              in: 'query',
+              required: true,
+              description: 'ID do país cadastrado no banco',
+              schema: { type: 'integer', example: 1 },
+            },
+          ],
+          responses: {
+            200: {
+              description: 'Lista de sugestões de cidades.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string' },
+                            displayName: { type: 'string' },
+                            countryCode: { type: 'string' },
+                            countryName: { type: 'string' },
+                            latitude: { type: 'number' },
+                            longitude: { type: 'number' },
+                            population: { type: 'integer' },
+                          },
+                        },
+                      },
+                      total: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+            400: {
+              description: 'Parâmetros obrigatórios ausentes ou inválidos.',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/Error' },
+                },
+              },
+            },
+            404: { $ref: '#/components/responses/NotFound' },
+            401: { $ref: '#/components/responses/Unauthorized' },
+          },
+        },
+      },
+
       '/api-externas/regiao/{regiao}': {
         get: {
           tags: ['APIs Externas'],

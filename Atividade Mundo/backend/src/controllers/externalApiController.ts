@@ -3,8 +3,10 @@ import { City, Country } from '../models';
 import {
   getCountryInfo,
   getAllCountriesByRegion,
+  getCitySuggestions,
   getWeatherByCity,
   getWeatherByCoords,
+  validateCityInCountry,
 } from '../services/externalApiService';
 
 // GET /api-externas/pais/:nome
@@ -20,6 +22,91 @@ export const countryInfo = async (req: Request, res: Response, next: NextFunctio
     }
 
     res.json({ data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api-externas/validar-cidade?cidade=X&id_pais=Y
+// Valida se a cidade informada pertence ao país cadastrado informado
+export const validateCityCountry = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { cidade, id_pais } = req.query;
+
+    if (!cidade || !id_pais) {
+      res.status(400).json({ message: 'Os parâmetros cidade e id_pais são obrigatórios.' });
+      return;
+    }
+
+    const countryId = Number(id_pais);
+
+    if (!Number.isInteger(countryId) || countryId <= 0) {
+      res.status(400).json({ message: 'O parâmetro id_pais deve ser um número inteiro válido.' });
+      return;
+    }
+
+    const country = await Country.findByPk(countryId);
+
+    if (!country) {
+      res.status(404).json({ message: `País com ID ${countryId} não encontrado.` });
+      return;
+    }
+
+    const result = await validateCityInCountry(String(cidade), country.nome);
+
+    if (!result) {
+      res.status(404).json({ message: `Não foi possível validar a cidade "${cidade}" para o país "${country.nome}".` });
+      return;
+    }
+
+    if (!result.valid) {
+      res.status(404).json({
+        message: `A cidade "${cidade}" não foi encontrada no país "${country.nome}".`,
+        data: result,
+      });
+      return;
+    }
+
+    res.json({
+      message: 'Cidade validada com sucesso.',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api-externas/sugerir-cidades?cidade=X&id_pais=Y
+// Retorna sugestões de cidades similares para um país cadastrado
+export const suggestCities = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { cidade, id_pais } = req.query;
+
+    if (!cidade || !id_pais) {
+      res.status(400).json({ message: 'Os parâmetros cidade e id_pais são obrigatórios.' });
+      return;
+    }
+
+    const countryId = Number(id_pais);
+
+    if (!Number.isInteger(countryId) || countryId <= 0) {
+      res.status(400).json({ message: 'O parâmetro id_pais deve ser um número inteiro válido.' });
+      return;
+    }
+
+    const country = await Country.findByPk(countryId);
+
+    if (!country) {
+      res.status(404).json({ message: `País com ID ${countryId} não encontrado.` });
+      return;
+    }
+
+    const suggestions = await getCitySuggestions(String(cidade), country.nome);
+
+    res.json({
+      data: suggestions,
+      total: suggestions.length,
+    });
   } catch (error) {
     next(error);
   }

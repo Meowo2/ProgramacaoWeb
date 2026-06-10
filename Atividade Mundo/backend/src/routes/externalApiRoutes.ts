@@ -13,6 +13,18 @@ router.use(authenticate);
 router.get('/pais/:nome', controller.countryInfo);
 
 /**
+ * @route  GET /api-externas/validar-cidade?cidade=X&pais=Y
+ * @desc   Valida se a cidade informada pertence ao país informado
+ */
+router.get('/validar-cidade', controller.validateCityCountry);
+
+/**
+ * @route  GET /api-externas/sugerir-cidades?cidade=X&id_pais=Y
+ * @desc   Lista cidades parecidas para o país informado
+ */
+router.get('/sugerir-cidades', controller.suggestCities);
+
+/**
  * @route  GET /api-externas/regiao/:regiao
  * @desc   Lista países de uma região (Africa, Americas, Asia, Europe, Oceania)
  */
